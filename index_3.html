@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>美元換匯紀錄</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2;
+    --bg-card: #ffffff;
+    --bg-soft: #f3ede3;
+    --ink: #1a1410;
+    --ink-soft: #6b5d52;
+    --ink-faint: #a89888;
+    --line: #e8ddcc;
+    --line-soft: #f0e8db;
+    --accent: #c8462c;
+    --accent-soft: #f5d9cf;
+    --gain: #2d6a4f;
+    --gain-soft: #d4ebd8;
+    --loss: #b8412c;
+    --loss-soft: #f5dcd0;
+    --gold: #b8893a;
+    --shadow: 0 1px 2px rgba(26,20,16,.04), 0 4px 12px rgba(26,20,16,.04);
+    --shadow-lg: 0 4px 8px rgba(26,20,16,.06), 0 16px 40px rgba(26,20,16,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(200,70,44,.04) 0, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(184,137,58,.05) 0, transparent 40%);
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+  .serif { font-family: 'Fraunces', serif; font-feature-settings: 'ss01' 1; }
+
+  /* Header */
+  header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+    background: rgba(250, 247, 242, 0.92);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .brand-logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1;
+  }
+
+  .brand-tag {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+
+  .sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: var(--bg-soft);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border: 1px solid var(--line);
+    transition: all .15s ease;
+    white-space: nowrap;
+  }
+
+  .sync-pill:hover { background: var(--line-soft); }
+
+  .sync-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+
+  .sync-pill.connected .dot { background: var(--gain); box-shadow: 0 0 0 3px rgba(45,106,79,.15); }
+  .sync-pill.syncing .dot { background: var(--gold); animation: pulse 1s infinite; }
+  .sync-pill.error .dot { background: var(--loss); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Main container */
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Stats grid */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 14px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card.featured {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--ink) 0%, #2a201a 100%);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  .stat-card.featured::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle, rgba(200,70,44,.25), transparent 70%);
+    pointer-events: none;
+  }
+
+  .stat-label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .stat-card.featured .stat-label {
+    color: rgba(250, 247, 242, 0.6);
+  }
+
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-card.featured .stat-value {
+    font-size: 36px;
+    font-weight: 800;
+  }
+
+  .stat-sub {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-card.featured .stat-sub {
+    color: rgba(250, 247, 242, 0.7);
+  }
+
+  .stat-value.gain { color: var(--gain); }
+  .stat-value.loss { color: var(--loss); }
+  .stat-card.featured .stat-value.gain { color: #7fc299; }
+  .stat-card.featured .stat-value.loss { color: #f0a48c; }
+
+  /* Section heading */
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 28px 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-meta {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Chart */
+  .chart-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 8px;
+  }
+
+  .chart-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .chart-tab {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .15s;
+  }
+
+  .chart-tab.active {
+    background: var(--bg-soft);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+
+  #chart {
+    width: 100%;
+    height: 180px;
+    display: block;
+  }
+
+  .chart-empty {
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+
+  /* Records */
+  .records {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .record {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: all .15s;
+  }
+
+  .record:hover {
+    border-color: var(--ink-faint);
+    transform: translateY(-1px);
+  }
+
+  .record-tag {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  .record-tag.buy {
+    background: var(--gain-soft);
+    color: var(--gain);
+  }
+
+  .record-tag.sell {
+    background: var(--loss-soft);
+    color: var(--loss);
+  }
+
+  .record-body { min-width: 0; }
+
+  .record-line1 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+
+  .record-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  .record-rate {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .record-line2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .record-date {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .record-twd {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-faint);
+  }
+
+  .record-note {
+    font-style: italic;
+    color: var(--ink-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+
+  .record-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .record-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ink-faint);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+
+  .record-btn:hover {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+
+  .record-btn.del:hover {
+    background: var(--loss-soft);
+    color: var(--loss);
+  }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-faint);
+  }
+
+  .empty-mark {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 60px;
+    color: var(--line);
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .empty-text {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .empty-hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  /* Floating add button */
+  .fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    box-shadow: 0 8px 24px rgba(26,20,16,.25), 0 2px 6px rgba(26,20,16,.15);
+    cursor: pointer;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    z-index: 60;
+  }
+
+  .fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(26,20,16,.3), 0 4px 8px rgba(26,20,16,.18);
+  }
+
+  .fab:active { transform: scale(0.95); }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,20,16,.5);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn .2s;
+  }
+
+  .modal-bg.show { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal {
+    background: var(--bg);
+    width: 100%;
+    max-width: 520px;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp .25s cubic-bezier(.2,.9,.3,1);
+  }
+
+  @media (min-width: 600px) {
+    .modal-bg { align-items: center; }
+    .modal { border-radius: 20px; max-height: 85vh; }
+  }
+
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  .modal-sub {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+
+  /* Type toggle */
+  .type-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    background: var(--bg-soft);
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+  }
+
+  .type-btn {
+    padding: 11px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .type-btn .label-zh { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 800; }
+
+  .type-btn.active.buy {
+    background: var(--gain-soft);
+    color: var(--gain);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+
+  .type-btn.active.sell {
+    background: var(--loss-soft);
+    color: var(--loss);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+
+  /* Form */
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-card);
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    transition: all .15s;
+    -webkit-appearance: none;
+  }
+
+  input.mono, textarea.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(26,20,16,.06);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .amount-tab {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .amount-tab.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  .twd-preview {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .twd-preview-label {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .twd-preview-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .btn {
+    padding: 13px;
+    border-radius: 11px;
+    border: none;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .btn-secondary {
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+
+  .btn-secondary:hover { background: var(--line-soft); }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .btn-primary:hover { opacity: .92; }
+
+  .btn-danger {
+    background: var(--loss-soft);
+    color: var(--loss);
+    border: 1px solid var(--loss-soft);
+  }
+
+  .btn-danger:hover { background: var(--loss); color: white; }
+
+  /* Settings panel */
+  .settings-section {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .settings-section:last-of-type { border-bottom: none; }
+
+  .help-block {
+    background: var(--bg-soft);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .help-block ol { padding-left: 18px; margin-top: 4px; }
+  .help-block li { margin-bottom: 4px; }
+  .help-block a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .help-block a:hover { text-decoration: underline; }
+  .help-block code {
+    background: var(--bg-card);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transition: all .25s;
+    z-index: 200;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.error { background: var(--loss); }
+  .toast.success { background: var(--gain); }
+
+  /* Chart styling */
+  .chart-line { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+  .chart-area { fill: url(#chartGrad); opacity: .6; }
+  .chart-dot { fill: var(--bg-card); stroke: var(--accent); stroke-width: 1.5; }
+  .chart-dot.buy { stroke: var(--gain); fill: var(--gain); }
+  .chart-dot.sell { stroke: var(--loss); fill: var(--loss); }
+  .chart-axis { stroke: var(--line); stroke-width: 1; }
+  .chart-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; fill: var(--ink-faint); }
+
+  /* Misc */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+
+  /* Decorative ornament */
+  .ornament {
+    text-align: center;
+    color: var(--line);
+    font-family: 'Fraunces', serif;
+    margin: 32px 0 16px;
+    letter-spacing: 1em;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container" style="padding-top: 0; padding-bottom: 0;">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-logo">換匯誌 <span style="font-size:14px; color:var(--accent); font-weight:600;">·</span> <span style="font-size:14px; font-weight:400; color:var(--ink-soft);">USD/TWD</span></div>
+        <div class="brand-tag">Forex Ledger</div>
+      </div>
+      <button class="sync-pill" id="syncPill" onclick="openSettings()">
+        <span class="dot"></span>
+        <span id="syncText">未連線</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card featured">
+      <div class="stat-label">Net Profit · 累計損益</div>
+      <div class="stat-value mono" id="statTotal">NT$ 0</div>
+      <div class="stat-sub" id="statTotalSub">尚無紀錄</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">總領出 (賺)</div>
+      <div class="stat-value mono" id="statWithdraw">—</div>
+      <div class="stat-sub" id="statWithdrawSub">0 次</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">總補入 (虧)</div>
+      <div class="stat-value mono" id="statTopup">—</div>
+      <div class="stat-sub" id="statTopupSub">0 次</div>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="section-head">
+    <div class="section-title">損益走勢 <span class="serif" style="color:var(--ink-faint); font-style:italic; font-weight:400; font-size:14px;">— P/L Trend</span></div>
+    <div class="section-meta" id="chartMeta">— 筆紀錄</div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-tabs">
+      <button class="chart-tab active" data-tab="all" onclick="setChartTab('all')">全部</button>
+      <button class="chart-tab" data-tab="30" onclick="setChartTab('30')">近30日</button>
+      <button class="chart-tab" data-tab="90" onclick="setChartTab('90')">近90日</button>
+    </div>
+    <div id="chartContainer">
+      <div class="chart-empty">尚無資料</div>
+    </div>
+  </div>
+
+  <!-- Records -->
+  <div class="section-head">
+    <div class="section-title">交易紀錄 <span class="serif" style="color:var(--ink-faint); font-style:italic; font-weight:400; font-size:14px;">— Transactions</span></div>
+    <div class="section-meta" id="recordsMeta">0 筆</div>
+  </div>
+
+  <div class="records" id="recordsList">
+    <div class="empty">
+      <div class="empty-mark">∅</div>
+      <div class="empty-text">還沒有任何紀錄</div>
+      <div class="empty-hint">點右下角 + 新增第一筆</div>
+    </div>
+  </div>
+
+  <div class="ornament">· · ·</div>
+
+</main>
+
+<button class="fab" onclick="openAdd()" aria-label="新增紀錄">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<!-- Add/Edit Modal -->
+<div class="modal-bg" id="modalAdd">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">新增換匯紀錄</div>
+    <div class="modal-sub serif" style="font-style:italic;">記下每一次的買賣</div>
+
+    <div class="type-toggle">
+      <button class="type-btn buy active" id="typeBuy" onclick="setType('buy')">
+        <span class="label-zh">領</span>
+        <span>領出台幣 (賺)</span>
+      </button>
+      <button class="type-btn sell" id="typeSell" onclick="setType('sell')">
+        <span class="label-zh">補</span>
+        <span>補入台幣 (虧)</span>
+      </button>
+    </div>
+
+    <div class="field">
+      <label class="field-label">日期</label>
+      <input type="date" id="fDate">
+    </div>
+
+    <div class="field">
+      <label class="field-label" id="twdLabel">台幣金額 (賺多少)</label>
+      <input type="number" inputmode="decimal" step="1" class="mono" id="fTwd" placeholder="0" oninput="updateTotalPreview()">
+    </div>
+
+    <div class="twd-preview">
+      <span class="twd-preview-label">儲存後累計損益</span>
+      <span class="twd-preview-value" id="totalPreview">—</span>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">當時匯率 (可選)</label>
+        <input type="number" inputmode="decimal" step="0.0001" class="mono" id="fRate" placeholder="31.5250">
+      </div>
+      <div class="field">
+        <label class="field-label">當時餘額 (可選)</label>
+        <input type="number" inputmode="decimal" step="1" class="mono" id="fBalance" placeholder="501200">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">備註 (可選)</label>
+      <textarea id="fNote" placeholder="例如:近7日最高、補回50萬..."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeAdd()">取消</button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveRecord()">儲存</button>
+    </div>
+
+    <div id="editExtra" style="display:none; margin-top: 10px;">
+      <button class="btn btn-danger" style="width:100%;" onclick="deleteRecord()">刪除這筆紀錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-bg" id="modalSettings">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">雲端同步設定</div>
+    <div class="modal-sub serif" style="font-style:italic;">使用 GitHub Gist 做手機/電腦同步</div>
+
+    <div class="settings-section">
+      <label class="field-label">GitHub Personal Access Token</label>
+      <div class="help-block">
+        到 <a href="https://github.com/settings/tokens?type=beta" target="_blank">GitHub 設定頁</a> 建立 Token:
+        <ol>
+          <li>選 <code>Generate new token</code> → <code>Fine-grained</code></li>
+          <li>Token name 隨意,Expiration 選最長 (1 year)</li>
+          <li>Permissions 找到 <code>Gists</code> → 設成 <code>Read and write</code></li>
+          <li>建立後複製 Token 貼進下方</li>
+        </ol>
+      </div>
+      <input type="password" class="mono" id="sToken" placeholder="github_pat_..." style="margin-bottom: 10px;">
+
+      <label class="field-label">Gist ID (留空會自動建立)</label>
+      <input type="text" class="mono" id="sGistId" placeholder="第一次連線後自動填入">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeSettings()">關閉</button>
+      <button class="btn btn-primary" onclick="connectAndSync()">儲存並同步</button>
+    </div>
+
+    <div class="settings-section" style="margin-top: 20px;">
+      <label class="field-label">資料管理</label>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="btn btn-secondary" onclick="exportData()">匯出 JSON</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">匯入 JSON</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+//=============================================================
+// State
+//=============================================================
+let records = []; // {id, type:'buy'|'sell', date, usd, rate, note}
+let chartTab = 'all';
+let editingId = null;
+
+const KEY_RECORDS = 'forex_records_v1';
+const KEY_TOKEN = 'forex_gh_token';
+const KEY_GIST = 'forex_gh_gist';
+
+//=============================================================
+// Helpers
+//=============================================================
+const fmt = (n, d=2) => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+};
+const fmtInt = n => n == null || isNaN(n) ? '—' : Math.round(n).toLocaleString('en-US');
+const todayStr = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+};
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast ' + type, 2400);
+}
+
+//=============================================================
+// Storage (local)
+//=============================================================
+function saveLocal() {
+  localStorage.setItem(KEY_RECORDS, JSON.stringify(records));
+}
+function loadLocal() {
+  try {
+    const r = JSON.parse(localStorage.getItem(KEY_RECORDS) || '[]');
+    if (Array.isArray(r)) records = r;
+  } catch(e) { records = []; }
+}
+
+//=============================================================
+// Cloud sync (GitHub Gist)
+//=============================================================
+let syncing = false;
+
+async function gistRequest(method, path='', body=null) {
+  const token = localStorage.getItem(KEY_TOKEN);
+  if (!token) throw new Error('未設定 Token');
+
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }
+  };
+  if (body) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+
+  const res = await fetch('https://api.github.com/gists' + path, opts);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error('GitHub: ' + res.status + ' ' + err);
+  }
+  return res.json();
+}
+
+async function cloudPush() {
+  const gistId = localStorage.getItem(KEY_GIST);
+  const content = JSON.stringify({
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    records
+  }, null, 2);
+
+  if (gistId) {
+    await gistRequest('PATCH', '/' + gistId, {
+      files: { 'forex-records.json': { content } }
+    });
+  } else {
+    const data = await gistRequest('POST', '', {
+      description: 'USD/TWD 換匯紀錄',
+      public: false,
+      files: { 'forex-records.json': { content } }
+    });
+    localStorage.setItem(KEY_GIST, data.id);
+    document.getElementById('sGistId').value = data.id;
+  }
+}
+
+async function cloudPull() {
+  const gistId = localStorage.getItem(KEY_GIST);
+  if (!gistId) return false;
+
+  const data = await gistRequest('GET', '/' + gistId);
+  const file = data.files && data.files['forex-records.json'];
+  if (!file) return false;
+
+  let content = file.content;
+  // Handle truncated content
+  if (file.truncated && file.raw_url) {
+    const r = await fetch(file.raw_url);
+    content = await r.text();
+  }
+
+  const parsed = JSON.parse(content);
+  if (Array.isArray(parsed.records)) {
+    records = parsed.records;
+    saveLocal();
+    return true;
+  }
+  return false;
+}
+
+async function syncNow(silent=false) {
+  if (syncing) return;
+  if (!localStorage.getItem(KEY_TOKEN)) {
+    setSyncStatus('disconnected');
+    return;
+  }
+  syncing = true;
+  setSyncStatus('syncing');
+  try {
+    const gistId = localStorage.getItem(KEY_GIST);
+    if (gistId) {
+      // Strategy: try pull first, then push merged state
+      // Simpler: push (which overwrites). For multi-device, pull-then-push with merge.
+      await cloudPull().catch(() => {}); // pull latest if exists
+      await cloudPush();
+    } else {
+      await cloudPush(); // creates new gist
+    }
+    setSyncStatus('connected');
+    if (!silent) toast('已同步', 'success');
+    render();
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error');
+    if (!silent) toast('同步失敗: ' + e.message, 'error');
+  }
+  syncing = false;
+}
+
+function setSyncStatus(state) {
+  const pill = document.getElementById('syncPill');
+  const text = document.getElementById('syncText');
+  pill.className = 'sync-pill ' + (state === 'disconnected' ? '' : state);
+  const labels = {
+    disconnected: '未連線',
+    syncing: '同步中...',
+    connected: '已同步',
+    error: '同步錯誤'
+  };
+  text.textContent = labels[state] || labels.disconnected;
+}
+
+//=============================================================
+// Calculations
+//=============================================================
+function calcStats() {
+  let totalWithdraw = 0; // type === 'buy' (領出 = 賺)
+  let totalTopup = 0;    // type === 'sell' (補入 = 虧)
+  let withdrawCount = 0;
+  let topupCount = 0;
+
+  for (const r of records) {
+    if (r.type === 'buy') {
+      totalWithdraw += r.usd; // we reuse the .usd field to store TWD amount now
+      withdrawCount++;
+    } else {
+      totalTopup += r.usd;
+      topupCount++;
+    }
+  }
+
+  return {
+    netProfit: totalWithdraw - totalTopup,
+    totalWithdraw,
+    totalTopup,
+    withdrawCount,
+    topupCount,
+    totalOps: withdrawCount + topupCount
+  };
+}
+
+//=============================================================
+// Rendering
+//=============================================================
+function render() {
+  const stats = calcStats();
+
+  // Featured: net profit
+  const totalEl = document.getElementById('statTotal');
+  const totalSubEl = document.getElementById('statTotalSub');
+  if (stats.totalOps === 0) {
+    totalEl.textContent = 'NT$ 0';
+    totalEl.className = 'stat-value mono';
+    totalSubEl.textContent = '尚無紀錄';
+  } else {
+    const sign = stats.netProfit >= 0 ? '+' : '−';
+    totalEl.textContent = sign + 'NT$ ' + fmtInt(Math.abs(stats.netProfit));
+    totalEl.className = 'stat-value mono ' + (stats.netProfit >= 0 ? 'gain' : 'loss');
+    totalSubEl.textContent = `${stats.totalOps} 次操作 · 領 ${stats.withdrawCount} / 補 ${stats.topupCount}`;
+  }
+
+  // Withdraw
+  document.getElementById('statWithdraw').textContent = stats.withdrawCount > 0
+    ? '+' + fmtInt(stats.totalWithdraw)
+    : '—';
+  document.getElementById('statWithdraw').className = 'stat-value mono' + (stats.withdrawCount > 0 ? ' gain' : '');
+  document.getElementById('statWithdrawSub').textContent = stats.withdrawCount + ' 次';
+
+  // Topup
+  document.getElementById('statTopup').textContent = stats.topupCount > 0
+    ? '−' + fmtInt(stats.totalTopup)
+    : '—';
+  document.getElementById('statTopup').className = 'stat-value mono' + (stats.topupCount > 0 ? ' loss' : '');
+  document.getElementById('statTopupSub').textContent = stats.topupCount + ' 次';
+
+  // Records list
+  renderRecords();
+  // Chart
+  renderChart();
+
+  // Counts
+  document.getElementById('recordsMeta').textContent = records.length + ' 筆';
+  document.getElementById('chartMeta').textContent = records.length + ' 筆紀錄';
+}
+
+function renderRecords() {
+  const list = document.getElementById('recordsList');
+  if (records.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-mark">∅</div>
+      <div class="empty-text">還沒有任何紀錄</div>
+      <div class="empty-hint">點右下角 + 新增第一筆</div>
+    </div>`;
+    return;
+  }
+
+  // Sort newest first for display, but compute running total in chronological order
+  const chronological = [...records].sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const runningMap = {};
+  let running = 0;
+  for (const r of chronological) {
+    running += (r.type === 'buy' ? r.usd : -r.usd);
+    runningMap[r.id] = running;
+  }
+
+  const sorted = [...records].sort((a,b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+
+  list.innerHTML = sorted.map(r => {
+    const isWithdraw = r.type === 'buy';
+    const sign = isWithdraw ? '+' : '−';
+    const amount = fmtInt(r.usd);
+    const cumulative = runningMap[r.id];
+    const cumSign = cumulative >= 0 ? '+' : '−';
+    const cumClass = cumulative >= 0 ? 'gain' : 'loss';
+
+    const meta = [];
+    if (r.rate) meta.push(`@ ${fmt(r.rate, 4)}`);
+    if (r.balance) meta.push(`餘額 ${fmtInt(r.balance)}`);
+    if (r.note) meta.push(escapeHtml(r.note));
+
+    return `
+    <div class="record">
+      <div class="record-tag ${r.type}">${isWithdraw ? '領' : '補'}</div>
+      <div class="record-body">
+        <div class="record-line1">
+          <span class="record-amount" style="color: var(--${isWithdraw ? 'gain' : 'loss'});">${sign}NT$ ${amount}</span>
+          <span class="record-rate" style="color: var(--ink-faint); font-size: 11px;">→</span>
+          <span class="record-rate ${cumClass}" style="font-weight: 600;">${cumSign}${fmtInt(Math.abs(cumulative))}</span>
+        </div>
+        <div class="record-line2">
+          <span class="record-date">${r.date}</span>
+          ${meta.length > 0 ? meta.map(m => `<span style="color:var(--line);">·</span><span class="record-note">${m}</span>`).join('') : ''}
+        </div>
+      </div>
+      <div class="record-actions">
+        <button class="record-btn" onclick="editRecord('${r.id}')" aria-label="編輯">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+//=============================================================
+// Chart
+//=============================================================
+function setChartTab(t) {
+  chartTab = t;
+  document.querySelectorAll('.chart-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === t);
+  });
+  renderChart();
+}
+
+function renderChart() {
+  const container = document.getElementById('chartContainer');
+  if (records.length < 1) {
+    container.innerHTML = '<div class="chart-empty">尚無資料</div>';
+    return;
+  }
+
+  let data = [...records].sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+
+  // Filter by tab
+  if (chartTab !== 'all') {
+    const days = parseInt(chartTab, 10);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    data = data.filter(r => r.date >= cutoffStr);
+  }
+
+  if (data.length < 1) {
+    container.innerHTML = '<div class="chart-empty">此區間無資料</div>';
+    return;
+  }
+
+  // Compute cumulative P/L at each point
+  const points = [];
+  let running = 0;
+  // Need to start from 0 or from cumulative state if filtered
+  if (chartTab !== 'all') {
+    const allSorted = [...records].sort((a,b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    for (const r of allSorted) {
+      if (data.find(d => d.id === r.id)) break;
+      running += (r.type === 'buy' ? r.usd : -r.usd);
+    }
+  }
+  for (const r of data) {
+    running += (r.type === 'buy' ? r.usd : -r.usd);
+    points.push({ id: r.id, date: r.date, type: r.type, value: running });
+  }
+
+  // Build chart
+  const W = container.clientWidth || 600;
+  const H = 200;
+  const padL = 56, padR = 16, padT = 14, padB = 28;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const values = points.map(p => p.value);
+  let minV = Math.min(...values, 0); // include 0 as baseline
+  let maxV = Math.max(...values, 0);
+  if (minV === maxV) { minV -= 100; maxV += 100; }
+  const padV = (maxV - minV) * 0.15;
+  minV -= padV; maxV += padV;
+
+  const dates = points.map(p => new Date(p.date).getTime());
+  const minD = Math.min(...dates);
+  const maxD = Math.max(...dates);
+  const dRange = maxD - minD || 86400000;
+
+  const xScale = t => padL + (points.length === 1 ? innerW/2 : ((t - minD) / dRange) * innerW);
+  const yScale = v => padT + ((maxV - v) / (maxV - minV)) * innerH;
+  const zeroY = yScale(0);
+
+  // Build path
+  let path = '';
+  points.forEach((p, i) => {
+    const x = xScale(new Date(p.date).getTime());
+    const y = yScale(p.value);
+    path += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  });
+
+  // Y-axis ticks (4)
+  const ticks = [];
+  for (let i = 0; i <= 3; i++) {
+    const v = maxV - (maxV - minV) * (i/3);
+    const y = padT + (innerH * i / 3);
+    ticks.push({ v, y });
+  }
+
+  // X-axis labels
+  const xTicks = [];
+  if (points.length === 1) {
+    xTicks.push({ d: points[0].date.slice(5), x: xScale(new Date(points[0].date).getTime()) });
+  } else {
+    xTicks.push({ d: points[0].date.slice(5), x: xScale(minD) });
+    if (points.length > 2) {
+      const midD = (minD + maxD) / 2;
+      const midDate = new Date(midD).toISOString().slice(5,10);
+      xTicks.push({ d: midDate, x: xScale(midD) });
+    }
+    xTicks.push({ d: points[points.length-1].date.slice(5), x: xScale(maxD) });
+  }
+
+  // Final value color depends on sign
+  const finalValue = points[points.length - 1].value;
+  const lineColor = finalValue >= 0 ? 'var(--gain)' : 'var(--loss)';
+  const gradId = 'chartGrad';
+
+  // Dots
+  const dots = points.map(p => {
+    const x = xScale(new Date(p.date).getTime());
+    const y = yScale(p.value);
+    const isWithdraw = p.type === 'buy';
+    const sign = isWithdraw ? '+' : '−';
+    return `<circle class="chart-dot ${p.type}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5">
+      <title>${p.date}: ${sign}NT$ ${fmtInt(p.value < 0 ? -p.value : p.value)} (累計${p.value >= 0 ? '+' : '−'}${fmtInt(Math.abs(p.value))})</title>
+    </circle>`;
+  }).join('');
+
+  // Area path (fill between line and zero)
+  let area = path;
+  if (points.length > 1) {
+    const lastX = xScale(new Date(points[points.length-1].date).getTime());
+    const firstX = xScale(new Date(points[0].date).getTime());
+    area += ` L${lastX.toFixed(1)},${zeroY.toFixed(1)} L${firstX.toFixed(1)},${zeroY.toFixed(1)} Z`;
+  }
+
+  container.innerHTML = `
+    <svg id="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="${lineColor}" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${ticks.map(t => `
+        <line class="chart-axis" x1="${padL}" y1="${t.y}" x2="${W-padR}" y2="${t.y}" stroke-dasharray="2,3" opacity="0.5"/>
+        <text class="chart-label" x="${padL-6}" y="${t.y+3}" text-anchor="end">${t.v >= 0 ? '+' : '−'}${fmtInt(Math.abs(t.v))}</text>
+      `).join('')}
+      <line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+      ${points.length > 1 ? `<path class="chart-area" d="${area}" fill="url(#${gradId})"/>` : ''}
+      ${points.length > 1 ? `<path class="chart-line" d="${path}" stroke="${lineColor}" fill="none" stroke-width="1.8"/>` : ''}
+      ${dots}
+      ${xTicks.map(t => `<text class="chart-label" x="${t.x}" y="${H-8}" text-anchor="middle">${t.d}</text>`).join('')}
+    </svg>
+  `;
+}
+
+//=============================================================
+// Modal: Add/Edit
+//=============================================================
+let formType = 'buy';
+
+function setType(t) {
+  formType = t;
+  document.getElementById('typeBuy').classList.toggle('active', t === 'buy');
+  document.getElementById('typeSell').classList.toggle('active', t === 'sell');
+  document.getElementById('twdLabel').textContent = t === 'buy' ? '台幣金額 (賺多少)' : '台幣金額 (虧多少)';
+  updateTotalPreview();
+}
+
+function updateTotalPreview() {
+  const amount = parseFloat(document.getElementById('fTwd').value);
+  const el = document.getElementById('totalPreview');
+  if (isNaN(amount) || amount <= 0) {
+    el.textContent = '—';
+    el.className = 'twd-preview-value';
+    return;
+  }
+  // Calculate what total would be after this record (excluding the one being edited)
+  const stats = calcStats();
+  let current = stats.netProfit;
+  if (editingId) {
+    const orig = records.find(r => r.id === editingId);
+    if (orig) {
+      current -= (orig.type === 'buy' ? orig.usd : -orig.usd);
+    }
+  }
+  const delta = formType === 'buy' ? amount : -amount;
+  const newTotal = current + delta;
+  const sign = newTotal >= 0 ? '+' : '−';
+  el.textContent = sign + 'NT$ ' + fmtInt(Math.abs(newTotal));
+  el.className = 'twd-preview-value ' + (newTotal >= 0 ? 'gain' : 'loss');
+}
+
+function openAdd() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = '新增換匯紀錄';
+  document.getElementById('btnSave').textContent = '儲存';
+  document.getElementById('editExtra').style.display = 'none';
+  setType('buy');
+  document.getElementById('fDate').value = todayStr();
+  document.getElementById('fTwd').value = '';
+  document.getElementById('fRate').value = '';
+  document.getElementById('fBalance').value = '';
+  document.getElementById('fNote').value = '';
+  updateTotalPreview();
+  document.getElementById('modalAdd').classList.add('show');
+  setTimeout(() => document.getElementById('fTwd').focus(), 50);
+}
+
+function editRecord(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '編輯紀錄';
+  document.getElementById('btnSave').textContent = '更新';
+  document.getElementById('editExtra').style.display = 'block';
+  setType(r.type);
+  document.getElementById('fDate').value = r.date;
+  document.getElementById('fTwd').value = r.usd; // .usd field stores TWD amount
+  document.getElementById('fRate').value = r.rate || '';
+  document.getElementById('fBalance').value = r.balance || '';
+  document.getElementById('fNote').value = r.note || '';
+  updateTotalPreview();
+  document.getElementById('modalAdd').classList.add('show');
+}
+
+function closeAdd() {
+  document.getElementById('modalAdd').classList.remove('show');
+}
+
+function saveRecord() {
+  const date = document.getElementById('fDate').value;
+  const amount = parseFloat(document.getElementById('fTwd').value);
+  const rateStr = document.getElementById('fRate').value;
+  const balanceStr = document.getElementById('fBalance').value;
+  const note = document.getElementById('fNote').value.trim();
+
+  if (!date) { toast('請選日期', 'error'); return; }
+  if (isNaN(amount) || amount <= 0) { toast('請填台幣金額', 'error'); return; }
+
+  const rate = rateStr ? parseFloat(rateStr) : null;
+  const balance = balanceStr ? parseFloat(balanceStr) : null;
+
+  // We reuse `usd` field to mean "amount in TWD" for backward-compat with stats logic
+  const recordData = {
+    type: formType,
+    date,
+    usd: amount,
+    rate: rate || null,
+    balance: balance || null,
+    note
+  };
+
+  if (editingId) {
+    const idx = records.findIndex(r => r.id === editingId);
+    if (idx >= 0) {
+      records[idx] = { ...records[idx], ...recordData };
+    }
+  } else {
+    records.push({ id: uid(), ...recordData });
+  }
+
+  saveLocal();
+  closeAdd();
+  render();
+  toast(editingId ? '已更新' : '已新增', 'success');
+  // Auto-sync if connected
+  if (localStorage.getItem(KEY_TOKEN)) {
+    syncNow(true);
+  }
+}
+
+function deleteRecord() {
+  if (!editingId) return;
+  if (!confirm('確定刪除這筆紀錄?')) return;
+  records = records.filter(r => r.id !== editingId);
+  saveLocal();
+  closeAdd();
+  render();
+  toast('已刪除');
+  if (localStorage.getItem(KEY_TOKEN)) {
+    syncNow(true);
+  }
+}
+
+//=============================================================
+// Modal: Settings
+//=============================================================
+function openSettings() {
+  document.getElementById('sToken').value = localStorage.getItem(KEY_TOKEN) || '';
+  document.getElementById('sGistId').value = localStorage.getItem(KEY_GIST) || '';
+  document.getElementById('modalSettings').classList.add('show');
+}
+
+function closeSettings() {
+  document.getElementById('modalSettings').classList.remove('show');
+}
+
+async function connectAndSync() {
+  const token = document.getElementById('sToken').value.trim();
+  const gistId = document.getElementById('sGistId').value.trim();
+
+  if (!token) {
+    toast('請填 Token', 'error');
+    return;
+  }
+
+  localStorage.setItem(KEY_TOKEN, token);
+  if (gistId) {
+    localStorage.setItem(KEY_GIST, gistId);
+  }
+
+  setSyncStatus('syncing');
+  try {
+    // If gist id given, try pulling first
+    if (localStorage.getItem(KEY_GIST)) {
+      const pulled = await cloudPull();
+      if (pulled) {
+        toast('已從雲端載入資料', 'success');
+        render();
+      }
+    }
+    // Then push (creates if needed)
+    await cloudPush();
+    setSyncStatus('connected');
+    toast('連線成功', 'success');
+    closeSettings();
+  } catch(e) {
+    setSyncStatus('error');
+    toast('連線失敗: ' + e.message, 'error');
+  }
+}
+
+//=============================================================
+// Import / Export
+//=============================================================
+function exportData() {
+  const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), records }, null, 2)],
+    { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `forex-records-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('已匯出');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data.records)) {
+        if (records.length > 0 && !confirm(`目前有 ${records.length} 筆,匯入會覆蓋。確定?`)) return;
+        records = data.records;
+        saveLocal();
+        render();
+        toast(`已匯入 ${records.length} 筆`, 'success');
+      } else {
+        toast('檔案格式錯誤', 'error');
+      }
+    } catch(err) {
+      toast('解析失敗', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+//=============================================================
+// Init
+//=============================================================
+async function init() {
+  loadLocal();
+
+  // Init sync status if token exists
+  if (localStorage.getItem(KEY_TOKEN)) {
+    setSyncStatus('syncing');
+    try {
+      // Pull first to get latest from cloud
+      if (localStorage.getItem(KEY_GIST)) {
+        await cloudPull();
+      }
+      setSyncStatus('connected');
+    } catch(e) {
+      setSyncStatus('error');
+      console.error(e);
+    }
+  }
+
+  render();
+}
+
+// Close modal on background click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => {
+    if (e.target === bg) bg.classList.remove('show');
+  });
+});
+
+// Re-render chart on resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderChart, 200);
+});
+
+init();
+</script>
+
+</body>
+</html>
