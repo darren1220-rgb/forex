@@ -764,6 +764,47 @@
   .chart-axis { stroke: var(--line); stroke-width: 1; }
   .chart-label { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; fill: var(--ink-faint); }
 
+  /* ===== FX market analysis ===== */
+  :root { --usd: #c8462c; --twd: #2f5d8a; --twd-soft: #d9e4ef; }
+  .fx-quote { background: var(--bg-card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow); margin-bottom:12px; }
+  .fx-quote-top { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  .fx-price { font-family:'Fraunces',serif; font-weight:800; font-size:38px; letter-spacing:-0.02em; line-height:1; font-variant-numeric:tabular-nums; }
+  .fx-chg { font-family:'JetBrains Mono',monospace; font-size:13px; margin-top:6px; }
+  .fx-chg.up { color: var(--usd); } .fx-chg.down { color: var(--twd); } .fx-chg.flat { color: var(--ink-soft); }
+  .fx-badge { display:inline-block; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:700; }
+  .fx-badge.up { background: var(--accent-soft); color: var(--usd); }
+  .fx-badge.down { background: var(--twd-soft); color: var(--twd); }
+  .fx-badge.flat { background: var(--bg-soft); color: var(--ink-soft); }
+  .fx-range { margin-top:14px; }
+  .fx-range-label { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; margin-bottom:5px; }
+  .fx-range-bar { position:relative; height:6px; border-radius:3px; background:linear-gradient(90deg, var(--twd-soft), var(--bg-soft) 50%, var(--accent-soft)); }
+  .fx-range-mark { position:absolute; top:-4px; width:3px; height:14px; border-radius:2px; background:var(--ink); transform:translateX(-50%); }
+  .fx-chart-wrap { position:relative; }
+  .fx-chart-head { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .fx-chart-head .chart-tabs { margin-bottom:0; }
+  .fx-legend { display:flex; gap:10px; flex-wrap:wrap; font-size:10.5px; color:var(--ink-soft); }
+  .fx-legend i { display:inline-block; width:12px; height:3px; border-radius:2px; vertical-align:middle; margin-right:4px; }
+  .fx-svg { width:100%; height:230px; display:block; touch-action:pan-y; }
+  .fx-tip { position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.5; padding:6px 9px; border-radius:8px; box-shadow:var(--shadow-lg); opacity:0; transition:opacity .1s; white-space:nowrap; z-index:5; }
+  .fx-tip.show { opacity:1; }
+  .fx-summary { background:var(--bg-card); border:1px solid var(--line); border-left:4px solid var(--ink); border-radius:14px; padding:14px 16px; box-shadow:var(--shadow); margin:12px 0; }
+  .fx-summary.up { border-left-color: var(--usd); } .fx-summary.down { border-left-color: var(--twd); }
+  .fx-summary-title { font-weight:700; font-size:15px; margin-bottom:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .fx-summary ul { list-style:none; font-size:12.5px; color:var(--ink-soft); line-height:1.7; }
+  .fx-summary li::before { content:'› '; color:var(--ink-faint); }
+  .fx-action { margin-top:8px; padding:9px 12px; border-radius:10px; background:var(--bg-soft); font-size:13px; font-weight:500; }
+  .fx-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+  @media (min-width:640px) { .fx-grid { grid-template-columns: 1fr 1.4fr; } }
+  .fx-table { width:100%; border-collapse:collapse; background:var(--bg-card); border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow); font-size:12.5px; }
+  .fx-table caption { text-align:left; font-size:11px; letter-spacing:.06em; color:var(--ink-faint); padding:0 2px 6px; font-weight:500; }
+  .fx-table th, .fx-table td { padding:8px 10px; border-bottom:1px solid var(--line-soft); text-align:left; }
+  .fx-table tr:last-child td { border-bottom:none; }
+  .fx-table th { background:var(--bg-soft); font-weight:500; color:var(--ink-soft); font-size:11px; }
+  .fx-table td.num { font-family:'JetBrains Mono',monospace; text-align:right; white-space:nowrap; }
+  .fx-table .up { color:var(--usd); } .fx-table .down { color:var(--twd); } .fx-table .flat { color:var(--ink-soft); }
+  .fx-note { font-size:10.5px; color:var(--ink-faint); margin-top:8px; line-height:1.6; }
+  .fx-retry { background:none; border:1px solid var(--line); border-radius:999px; padding:3px 9px; font-size:11px; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
+
   /* Misc */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -820,6 +861,39 @@
       <div class="stat-sub" id="statTopupSub">0 次</div>
     </div>
   </div>
+
+  <!-- FX Market Analysis -->
+  <div class="section-head">
+    <div class="section-title">匯率走勢 <span class="serif" style="color:var(--ink-faint); font-style:italic; font-weight:400; font-size:14px;">— USD/TWD Market</span></div>
+    <div class="section-meta"><span id="fxMeta">載入中…</span> <button class="fx-retry" onclick="loadFx(true)">↻</button></div>
+  </div>
+
+  <div class="fx-quote" id="fxQuote"><div class="chart-empty" style="height:60px;">載入匯率中…</div></div>
+
+  <div class="chart-wrap fx-chart-wrap" id="fxChartWrap">
+    <div class="fx-chart-head">
+      <div class="chart-tabs">
+        <button class="chart-tab fx-tab" data-fx="1M" onclick="setFxRange('1M')">1M</button>
+        <button class="chart-tab fx-tab" data-fx="3M" onclick="setFxRange('3M')">3M</button>
+        <button class="chart-tab fx-tab active" data-fx="6M" onclick="setFxRange('6M')">6M</button>
+        <button class="chart-tab fx-tab" data-fx="1Y" onclick="setFxRange('1Y')">1Y</button>
+        <button class="chart-tab fx-tab" data-fx="3Y" onclick="setFxRange('3Y')">3Y</button>
+      </div>
+      <div class="fx-legend">
+        <span><i style="background:var(--ink)"></i>匯率</span>
+        <span><i style="background:var(--accent)"></i>MA20</span>
+        <span><i style="background:var(--gold)"></i>MA60</span>
+        <span><i style="background:var(--line); height:8px;"></i>布林</span>
+      </div>
+    </div>
+    <div id="fxChart"><div class="chart-empty">—</div></div>
+    <div class="fx-tip" id="fxTip"></div>
+  </div>
+
+  <div class="fx-summary" id="fxSummary" style="display:none;"></div>
+
+  <div class="fx-grid" id="fxGrid"></div>
+  <div class="fx-note">資料：Frankfurter 每日參考匯率（1 USD = ? TWD，數字↑＝美元升值／台幣貶值），僅供參考，非銀行牌告或平台報價。圖上 ● 為有填匯率的領/補紀錄。</div>
 
   <!-- Chart -->
   <div class="section-head">
@@ -1230,6 +1304,7 @@ function render() {
   renderRecords();
   // Chart
   renderChart();
+  if (typeof renderFxChart === 'function' && fxI) renderFxChart();
 
   // Counts
   document.getElementById('recordsMeta').textContent = records.length + ' 筆';
@@ -1305,7 +1380,7 @@ function escapeHtml(s) {
 //=============================================================
 function setChartTab(t) {
   chartTab = t;
-  document.querySelectorAll('.chart-tab').forEach(b => {
+  document.querySelectorAll('.chart-tab:not(.fx-tab)').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === t);
   });
   renderChart();
@@ -1664,6 +1739,317 @@ function importData(event) {
 }
 
 //=============================================================
+// FX market analysis (USD/TWD)
+//=============================================================
+const KEY_FX = 'forex_fx_cache_v1';
+const FX_TTL = 30 * 60 * 1000;
+let fx = [];          // [{d, v}] trading days only
+let fxI = null;       // indicators
+let fxRange = '6M';
+
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} };
+
+async function loadFx(force=false) {
+  let cache = null;
+  try { cache = JSON.parse(lsGet(KEY_FX) || 'null'); } catch(e) {}
+  if (cache && Array.isArray(cache.data) && cache.data.length > 30 && !fx.length) {
+    fx = cache.data; computeFx(); renderFx();
+    document.getElementById('fxMeta').textContent = '快取 ' + new Date(cache.at).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+  }
+  if (!force && cache && Date.now() - cache.at < FX_TTL) return;
+
+  document.getElementById('fxMeta').textContent = '更新中…';
+  try {
+    const from = new Date(); from.setFullYear(from.getFullYear() - 5);
+    const url = 'https://api.frankfurter.dev/v2/rates?base=USD&quotes=TWD&from=' + from.toISOString().slice(0,10);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const rows = Array.isArray(json) ? json : [];
+    const data = rows
+      .filter(x => x && x.date && +x.rate > 0)
+      .map(x => ({ d: x.date, v: +x.rate }))
+      .filter(x => { const wd = new Date(x.d + 'T00:00:00Z').getUTCDay(); return wd !== 0 && wd !== 6; })
+      .sort((a,b) => a.d.localeCompare(b.d));
+    if (data.length < 30) throw new Error('資料不足');
+    fx = data;
+    lsSet(KEY_FX, JSON.stringify({ at: Date.now(), data }));
+    computeFx(); renderFx();
+    document.getElementById('fxMeta').textContent = '更新 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) {
+    console.error(e);
+    if (fx.length) {
+      document.getElementById('fxMeta').textContent = '離線 · 使用快取';
+    } else {
+      document.getElementById('fxMeta').textContent = '載入失敗';
+      document.getElementById('fxQuote').innerHTML = '<div class="chart-empty" style="height:60px;">匯率載入失敗，點右上 ↻ 重試</div>';
+      document.getElementById('fxChart').innerHTML = '<div class="chart-empty">—</div>';
+    }
+  }
+}
+
+function smaArr(v, n) {
+  const out = new Array(v.length).fill(null); let s = 0;
+  for (let i = 0; i < v.length; i++) { s += v[i]; if (i >= n) s -= v[i-n]; if (i >= n-1) out[i] = s / n; }
+  return out;
+}
+function stdArr(v, n, ma) {
+  const out = new Array(v.length).fill(null);
+  for (let i = n-1; i < v.length; i++) {
+    let s = 0; for (let j = i-n+1; j <= i; j++) s += (v[j]-ma[i]) ** 2;
+    out[i] = Math.sqrt(s / n);
+  }
+  return out;
+}
+function rsiArr(v, n=14) {
+  const out = new Array(v.length).fill(null);
+  if (v.length <= n) return out;
+  let g = 0, l = 0;
+  for (let i = 1; i <= n; i++) { const c = v[i]-v[i-1]; if (c > 0) g += c; else l -= c; }
+  g /= n; l /= n;
+  out[n] = l === 0 ? 100 : 100 - 100 / (1 + g/l);
+  for (let i = n+1; i < v.length; i++) {
+    const c = v[i]-v[i-1];
+    g = (g*(n-1) + Math.max(c,0)) / n;
+    l = (l*(n-1) + Math.max(-c,0)) / n;
+    out[i] = l === 0 ? 100 : 100 - 100 / (1 + g/l);
+  }
+  return out;
+}
+
+function computeFx() {
+  const v = fx.map(x => x.v);
+  const ma20 = smaArr(v, 20);
+  const sd20 = stdArr(v, 20, ma20);
+  fxI = {
+    v, ma5: smaArr(v, 5), ma20, ma60: smaArr(v, 60), ma120: smaArr(v, 120),
+    bbU: ma20.map((m,i) => m == null ? null : m + 2*sd20[i]),
+    bbL: ma20.map((m,i) => m == null ? null : m - 2*sd20[i]),
+    rsi: rsiArr(v, 14)
+  };
+}
+
+// index of last trading day on/before date string
+function fxIdxOnOrBefore(ds) {
+  let lo = 0, hi = fx.length - 1, ans = -1;
+  while (lo <= hi) { const m = (lo+hi) >> 1; if (fx[m].d <= ds) { ans = m; lo = m+1; } else hi = m-1; }
+  return ans;
+}
+function shiftDate(ds, {d=0, m=0, y=0}) {
+  const t = new Date(ds + 'T00:00:00Z');
+  t.setUTCFullYear(t.getUTCFullYear() + y, t.getUTCMonth() + m, t.getUTCDate() + d);
+  return t.toISOString().slice(0,10);
+}
+const dirCls = x => x > 0.0005 ? 'up' : x < -0.0005 ? 'down' : 'flat';
+const pctStr = x => (x >= 0 ? '+' : '−') + Math.abs(x*100).toFixed(2) + '%';
+
+function fxAnalysis() {
+  const L = fx.length - 1, I = fxI, p = I.v[L], last = fx[L].d;
+  // 52-week range
+  const y1 = Math.max(0, fxIdxOnOrBefore(shiftDate(last, {y:-1})));
+  let hi = -Infinity, lo = Infinity, hiD = '', loD = '';
+  for (let i = y1; i <= L; i++) { if (I.v[i] > hi) { hi = I.v[i]; hiD = fx[i].d; } if (I.v[i] < lo) { lo = I.v[i]; loD = fx[i].d; } }
+  const pos = hi > lo ? (p - lo) / (hi - lo) : 0.5;
+
+  // volatility (20D, annualized) from log returns
+  let rets = []; for (let i = Math.max(1, L-19); i <= L; i++) rets.push(Math.log(I.v[i]/I.v[i-1]));
+  const mean = rets.reduce((a,b)=>a+b,0) / rets.length;
+  const vol = Math.sqrt(rets.reduce((a,b)=>a+(b-mean)**2,0) / Math.max(1, rets.length-1)) * Math.sqrt(252);
+  const band1m = p * vol * Math.sqrt(21/252);
+
+  // last MA20/MA60 cross
+  let cross = null;
+  for (let i = L; i > 0; i--) {
+    if (I.ma20[i] == null || I.ma60[i] == null || I.ma20[i-1] == null || I.ma60[i-1] == null) break;
+    const a = I.ma20[i] - I.ma60[i], b = I.ma20[i-1] - I.ma60[i-1];
+    if (a > 0 && b <= 0) { cross = { type:'golden', d: fx[i].d, ago: L-i }; break; }
+    if (a < 0 && b >= 0) { cross = { type:'dead', d: fx[i].d, ago: L-i }; break; }
+  }
+
+  const ma20 = I.ma20[L], ma60 = I.ma60[L], ma120 = I.ma120[L], rsi = I.rsi[L];
+  const bbU = I.bbU[L], bbL = I.bbL[L];
+  const pctB = bbU > bbL ? (p - bbL) / (bbU - bbL) : 0.5;
+
+  // Trend
+  let trend = 0;
+  if (ma20 != null && ma60 != null) {
+    if (p > ma20 && ma20 > ma60) trend = 1;
+    else if (p < ma20 && ma20 < ma60) trend = -1;
+  }
+  const mom = rsi == null ? 0 : rsi >= 55 ? 1 : rsi <= 45 ? -1 : 0;
+  const score = trend * 2 + mom + (ma120 != null ? (p > ma120 ? 1 : -1) : 0);
+  const verdict = score >= 2 ? { cls:'up', t:'美元偏強 · 台幣偏弱' } : score <= -2 ? { cls:'down', t:'台幣偏強 · 美元偏弱' } : { cls:'flat', t:'區間盤整' };
+
+  const bullets = [];
+  bullets.push(trend === 1 ? `趨勢：價 > MA20 > MA60，美元多頭排列` : trend === -1 ? `趨勢：價 < MA20 < MA60，美元空頭排列（台幣升值趨勢）` : `趨勢：均線糾結，方向不明`);
+  if (cross) bullets.push(`${cross.type === 'golden' ? '黃金交叉' : '死亡交叉'}（MA20 ${cross.type==='golden'?'上穿':'下穿'} MA60）：${cross.d}，${cross.ago} 個交易日前`);
+  if (rsi != null) bullets.push(rsi >= 70 ? `RSI ${rsi.toFixed(0)} 超買：美元短線過熱，留意回落` : rsi <= 30 ? `RSI ${rsi.toFixed(0)} 超賣：美元短線超跌，留意反彈` : `RSI ${rsi.toFixed(0)} 中性`);
+  if (pctB > 1) bullets.push(`突破布林上軌 ${bbU.toFixed(3)}：短線急漲，易拉回`);
+  else if (pctB < 0) bullets.push(`跌破布林下軌 ${bbL.toFixed(3)}：短線急跌，易反彈`);
+  bullets.push(`近1年位置 ${(pos*100).toFixed(0)}%（低 ${lo.toFixed(3)} ／ 高 ${hi.toFixed(3)}）`);
+  bullets.push(`未來1個月 68% 機率區間 ≈ ${(p-band1m).toFixed(3)} – ${(p+band1m).toFixed(3)}（20日年化波動 ${(vol*100).toFixed(1)}%）`);
+
+  const action = pos >= 0.8 ? '美元處近1年高檔 → 持有美元者可分批換回台幣；不宜追買美元'
+    : pos <= 0.2 ? '美元處近1年低檔 → 需要美元者可分批承接；不宜殺低賣美元'
+    : '位於年區間中段 → 無明顯價位優勢，依趨勢方向小量操作';
+
+  return { L, p, last, hi, lo, hiD, loD, pos, vol, band1m, cross, ma20, ma60, ma120, rsi, bbU, bbL, pctB, trend, verdict, bullets, action };
+}
+
+function renderFx() {
+  if (!fxI || fx.length < 30) return;
+  const A = fxAnalysis(), I = fxI, L = A.L;
+
+  // Quote
+  const prev = I.v[L-1], d1 = A.p - prev, d1p = d1 / prev;
+  document.getElementById('fxQuote').innerHTML = `
+    <div class="fx-quote-top">
+      <div>
+        <div class="stat-label" style="margin-bottom:6px;">USD/TWD · ${A.last}</div>
+        <div class="fx-price">${A.p.toFixed(3)}</div>
+        <div class="fx-chg ${dirCls(d1)}">${d1 >= 0 ? '▲' : '▼'} ${Math.abs(d1).toFixed(3)} (${pctStr(d1p)}) 前一交易日</div>
+      </div>
+      <span class="fx-badge ${A.verdict.cls}">${A.verdict.t}</span>
+    </div>
+    <div class="fx-range">
+      <div class="fx-range-label"><span>52W 低 ${A.lo.toFixed(3)}</span><span>${(A.pos*100).toFixed(0)}%</span><span>高 ${A.hi.toFixed(3)}</span></div>
+      <div class="fx-range-bar"><div class="fx-range-mark" style="left:${(A.pos*100).toFixed(1)}%"></div></div>
+    </div>`;
+
+  // Summary
+  const sum = document.getElementById('fxSummary');
+  sum.style.display = '';
+  sum.className = 'fx-summary ' + A.verdict.cls;
+  sum.innerHTML = `
+    <div class="fx-summary-title">走勢判讀 <span class="fx-badge ${A.verdict.cls}">${A.verdict.t}</span></div>
+    <ul>${A.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+    <div class="fx-action">操作參考：${A.action}</div>`;
+
+  // Tables
+  const ytdStart = fxIdxOnOrBefore(A.last.slice(0,4) + '-01-01');
+  const periods = [
+    ['1 週', {d:-7}], ['1 個月', {m:-1}], ['3 個月', {m:-3}], ['6 個月', {m:-6}], ['1 年', {y:-1}], ['3 年', {y:-3}]
+  ].map(([label, off]) => {
+    const i = fxIdxOnOrBefore(shiftDate(A.last, off));
+    return i < 0 ? null : { label, base: I.v[i], chg: (A.p - I.v[i]) / I.v[i] };
+  }).filter(Boolean);
+  const ytdBaseIdx = ytdStart >= 0 ? ytdStart : 0;
+  periods.splice(3, 0, { label: '今年以來', base: I.v[ytdBaseIdx], chg: (A.p - I.v[ytdBaseIdx]) / I.v[ytdBaseIdx] });
+
+  const maRow = (name, m) => m == null ? '' : `<tr><td>${name}</td><td class="num">${m.toFixed(3)}</td><td class="num ${dirCls((A.p-m)/m)}">${pctStr((A.p-m)/m)}</td><td class="${A.p > m ? 'up' : 'down'}">${A.p > m ? '價在均線上' : '價在均線下'}</td></tr>`;
+  const rsiTxt = A.rsi == null ? '—' : A.rsi >= 70 ? '<span class="up">超買</span>' : A.rsi <= 30 ? '<span class="down">超賣</span>' : A.rsi >= 55 ? '<span class="up">偏多</span>' : A.rsi <= 45 ? '<span class="down">偏空</span>' : '中性';
+  const bTxt = A.pctB > 1 ? '<span class="up">破上軌</span>' : A.pctB < 0 ? '<span class="down">破下軌</span>' : A.pctB >= 0.8 ? '<span class="up">近上軌</span>' : A.pctB <= 0.2 ? '<span class="down">近下軌</span>' : '軌道中段';
+  const posTxt = A.pos >= 0.8 ? '<span class="up">高檔</span>' : A.pos <= 0.2 ? '<span class="down">低檔</span>' : '中段';
+
+  document.getElementById('fxGrid').innerHTML = `
+    <table class="fx-table">
+      <caption>區間漲跌 · 美元</caption>
+      <thead><tr><th>期間</th><th style="text-align:right">起點</th><th style="text-align:right">漲跌</th></tr></thead>
+      <tbody>${periods.map(r => `<tr><td>${r.label}</td><td class="num">${r.base.toFixed(3)}</td><td class="num ${dirCls(r.chg)}">${pctStr(r.chg)}</td></tr>`).join('')}</tbody>
+    </table>
+    <table class="fx-table">
+      <caption>技術指標</caption>
+      <thead><tr><th>指標</th><th style="text-align:right">數值</th><th style="text-align:right">乖離</th><th>判讀</th></tr></thead>
+      <tbody>
+        ${maRow('MA5', I.ma5[L])}${maRow('MA20', A.ma20)}${maRow('MA60', A.ma60)}${maRow('MA120', A.ma120)}
+        <tr><td>RSI(14)</td><td class="num">${A.rsi == null ? '—' : A.rsi.toFixed(1)}</td><td class="num">—</td><td>${rsiTxt}</td></tr>
+        <tr><td>布林 %B</td><td class="num">${(A.pctB*100).toFixed(0)}%</td><td class="num">${A.bbL.toFixed(2)}–${A.bbU.toFixed(2)}</td><td>${bTxt}</td></tr>
+        <tr><td>52W 位置</td><td class="num">${(A.pos*100).toFixed(0)}%</td><td class="num">${A.lo.toFixed(2)}–${A.hi.toFixed(2)}</td><td>${posTxt}</td></tr>
+        <tr><td>波動(20D)</td><td class="num">${(A.vol*100).toFixed(1)}%</td><td class="num">±${A.band1m.toFixed(3)}</td><td>1個月 1σ</td></tr>
+      </tbody>
+    </table>`;
+
+  renderFxChart();
+}
+
+function setFxRange(r) {
+  fxRange = r;
+  document.querySelectorAll('.fx-tab').forEach(b => b.classList.toggle('active', b.dataset.fx === r));
+  renderFxChart();
+}
+
+function renderFxChart() {
+  const box = document.getElementById('fxChart');
+  if (!fxI || fx.length < 30) return;
+  const I = fxI, L = fx.length - 1, last = fx[L].d;
+  const off = { '1M': {m:-1}, '3M': {m:-3}, '6M': {m:-6}, '1Y': {y:-1}, '3Y': {y:-3} }[fxRange];
+  const s = Math.max(0, fxIdxOnOrBefore(shiftDate(last, off)));
+  const n = L - s + 1;
+
+  const W = box.clientWidth || 600, H = 230;
+  const padL = 44, padR = 10, padT = 10, padB = 24;
+  const iw = W - padL - padR, ih = H - padT - padB;
+
+  let lo = Infinity, hi = -Infinity;
+  for (let i = s; i <= L; i++) for (const a of [I.v, I.bbU, I.bbL, I.ma60]) { const x = a[i]; if (x != null) { if (x < lo) lo = x; if (x > hi) hi = x; } }
+  const pad = (hi - lo) * 0.06 || 0.05; lo -= pad; hi += pad;
+
+  const X = i => padL + (n === 1 ? iw/2 : (i - s) / (n - 1) * iw);
+  const Y = v => padT + (hi - v) / (hi - lo) * ih;
+  const line = arr => { let d = '', pen = false; for (let i = s; i <= L; i++) { if (arr[i] == null) { pen = false; continue; } d += (pen ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(arr[i]).toFixed(1); pen = true; } return d; };
+
+  // Bollinger band polygon
+  let band = '', bandBack = '';
+  for (let i = s; i <= L; i++) if (I.bbU[i] != null) band += (band ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(I.bbU[i]).toFixed(1);
+  for (let i = L; i >= s; i--) if (I.bbL[i] != null) bandBack += 'L' + X(i).toFixed(1) + ',' + Y(I.bbL[i]).toFixed(1);
+
+  const yt = []; for (let k = 0; k <= 4; k++) { const v = hi - (hi - lo) * k / 4; yt.push(`<line x1="${padL}" x2="${W-padR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="chart-axis" stroke-dasharray="2,3" opacity=".6"/><text class="chart-label" x="${padL-5}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`); }
+  const short = ['1M','3M','6M'].includes(fxRange);
+  const xt = []; for (let k = 0; k <= 3; k++) { const i = Math.round(s + (n-1) * k / 3); const d = fx[i].d; xt.push(`<text class="chart-label" x="${X(i).toFixed(1)}" y="${H-7}" text-anchor="${k===0?'start':k===3?'end':'middle'}">${short ? d.slice(5) : d.slice(0,7)}</text>`); }
+
+  // record markers (records with rate)
+  const startD = fx[s].d;
+  const marks = records.filter(r => r.rate && r.date >= startD && r.date <= last).map(r => {
+    const i = Math.max(s, fxIdxOnOrBefore(r.date));
+    return `<circle cx="${X(i).toFixed(1)}" cy="${Y(r.rate).toFixed(1)}" r="4" fill="var(--${r.type === 'buy' ? 'gain' : 'loss'})" stroke="var(--bg-card)" stroke-width="1.5"><title>${r.date} ${r.type === 'buy' ? '領' : '補'} NT$ ${fmtInt(r.usd)} @ ${r.rate}</title></circle>`;
+  }).join('');
+
+  const pLast = I.v[L];
+  box.innerHTML = `
+    <svg class="fx-svg" id="fxSvg" viewBox="0 0 ${W} ${H}">
+      ${yt.join('')}
+      ${band ? `<path d="${band}${bandBack}Z" fill="var(--bg-soft)" opacity=".9"/>` : ''}
+      <path d="${line(I.bbU)}" fill="none" stroke="var(--line)" stroke-width="1"/>
+      <path d="${line(I.bbL)}" fill="none" stroke="var(--line)" stroke-width="1"/>
+      <path d="${line(I.ma60)}" fill="none" stroke="var(--gold)" stroke-width="1.3"/>
+      <path d="${line(I.ma20)}" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
+      <path d="${line(I.v)}" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linejoin="round"/>
+      <line x1="${padL}" x2="${W-padR}" y1="${Y(pLast).toFixed(1)}" y2="${Y(pLast).toFixed(1)}" stroke="var(--ink)" stroke-width=".8" stroke-dasharray="3,3" opacity=".45"/>
+      ${marks}
+      ${xt.join('')}
+      <line id="fxCross" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--ink-soft)" stroke-width="1" opacity="0"/>
+      <circle id="fxDot" r="3.5" fill="var(--ink)" stroke="var(--bg-card)" stroke-width="1.5" opacity="0"/>
+      <rect x="${padL}" y="${padT}" width="${iw}" height="${ih}" fill="transparent" id="fxHit"/>
+    </svg>`;
+
+  const svg = document.getElementById('fxSvg'), hit = document.getElementById('fxHit');
+  const cross = document.getElementById('fxCross'), dot = document.getElementById('fxDot');
+  const tip = document.getElementById('fxTip'), wrap = document.getElementById('fxChartWrap');
+  const move = e => {
+    const rect = svg.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (W / rect.width);
+    const i = Math.min(L, Math.max(s, Math.round(s + (px - padL) / iw * (n - 1))));
+    const x = X(i), y = Y(I.v[i]);
+    cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('opacity', .5);
+    dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('opacity', 1);
+    const f = a => a[i] == null ? '—' : a[i].toFixed(3);
+    tip.innerHTML = `${fx[i].d}<br>匯率 <b>${I.v[i].toFixed(3)}</b><br>MA20 ${f(I.ma20)}<br>MA60 ${f(I.ma60)}<br>RSI ${I.rsi[i] == null ? '—' : I.rsi[i].toFixed(0)}`;
+    tip.classList.add('show');
+    const wr = wrap.getBoundingClientRect();
+    const cx = rect.left - wr.left + x * rect.width / W;
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.min(wr.width - tw - 8, Math.max(8, cx + (cx > wr.width/2 ? -tw - 10 : 10))) + 'px';
+    tip.style.top = (rect.top - wr.top + 8) + 'px';
+  };
+  const leave = () => { tip.classList.remove('show'); cross.setAttribute('opacity', 0); dot.setAttribute('opacity', 0); };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', leave);
+  hit.addEventListener('pointercancel', leave);
+}
+
+//=============================================================
 // Init
 //=============================================================
 async function init() {
@@ -1685,6 +2071,7 @@ async function init() {
   }
 
   render();
+  loadFx();
 }
 
 // Close modal on background click
@@ -1698,7 +2085,7 @@ document.querySelectorAll('.modal-bg').forEach(bg => {
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(renderChart, 200);
+  resizeTimer = setTimeout(() => { renderChart(); renderFxChart(); }, 200);
 });
 
 init();
