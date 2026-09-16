@@ -802,6 +802,21 @@
   .fx-table th { background:var(--bg-soft); font-weight:500; color:var(--ink-soft); font-size:11px; }
   .fx-table td.num { font-family:'JetBrains Mono',monospace; text-align:right; white-space:nowrap; }
   .fx-table .up { color:var(--usd); } .fx-table .down { color:var(--twd); } .fx-table .flat { color:var(--ink-soft); }
+  .fx-hl { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .fx-hl-tag { display:inline-flex; align-items:center; gap:4px; padding:5px 11px; border-radius:999px; font-size:12.5px; font-weight:700; }
+  .fx-hl-tag.high { background: var(--accent); color:#fff; }
+  .fx-hl-tag.low { background: var(--gain); color:#fff; }
+  .fx-hl-tag.none { background: var(--bg-soft); color: var(--ink-soft); font-weight:500; }
+  .fx-hl-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+  .fx-hl-card { background:var(--bg-card); border:1px solid var(--line); border-radius:12px; padding:11px 12px; box-shadow:var(--shadow); }
+  .fx-hl-card.hit-high { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .fx-hl-card.hit-low { border-color: var(--gain); box-shadow: 0 0 0 2px var(--gain-soft); }
+  .fx-hl-k { font-size:11px; color:var(--ink-faint); letter-spacing:.06em; display:flex; justify-content:space-between; }
+  .fx-hl-v { font-family:'Fraunces',serif; font-weight:700; font-size:20px; font-variant-numeric:tabular-nums; margin-top:3px; }
+  .fx-hl-s { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .fx-signal { margin-top:8px; padding:10px 12px; border-radius:10px; font-size:13.5px; font-weight:700; }
+  .fx-signal.high { background: var(--accent-soft); color: var(--usd); }
+  .fx-signal.low { background: var(--gain-soft); color: var(--gain); }
   .fx-note { font-size:10.5px; color:var(--ink-faint); margin-top:8px; line-height:1.6; }
   .fx-retry { background:none; border:1px solid var(--line); border-radius:999px; padding:3px 9px; font-size:11px; color:var(--ink-soft); cursor:pointer; font-family:inherit; }
 
@@ -870,6 +885,8 @@
 
   <div class="fx-quote" id="fxQuote"><div class="chart-empty" style="height:60px;">載入匯率中…</div></div>
 
+  <div class="fx-hl-grid" id="fxHL"></div>
+
   <div class="chart-wrap fx-chart-wrap" id="fxChartWrap">
     <div class="fx-chart-head">
       <div class="chart-tabs">
@@ -893,7 +910,7 @@
   <div class="fx-summary" id="fxSummary" style="display:none;"></div>
 
   <div class="fx-grid" id="fxGrid"></div>
-  <div class="fx-note">資料：Frankfurter 每日參考匯率（1 USD = ? TWD，數字↑＝美元升值／台幣貶值），僅供參考，非銀行牌告或平台報價。圖上 ● 為有填匯率的領/補紀錄。</div>
+  <div class="fx-note">資料：Frankfurter 每日參考匯率（1 USD = ? TWD，數字↑＝美元升值／台幣貶值），僅供參考，非銀行牌告或平台報價。圖上 ● 為有填匯率的領/補紀錄，虛線為近30日高/低。7日/30日為日曆天（含今日），銀行牌告高低點可能與此略有差異。</div>
 
   <!-- Chart -->
   <div class="section-head">
@@ -1867,6 +1884,23 @@ function fxAnalysis() {
     if (a < 0 && b >= 0) { cross = { type:'dead', d: fx[i].d, ago: L-i }; break; }
   }
 
+  // N-calendar-day high/low (window includes today), like bank app "近7日最高/最低"
+  const win = days => {
+    const from = shiftDate(last, {d: -(days - 1)});
+    let h = -Infinity, l = Infinity, hd = '', ld = '';
+    for (let i = L; i >= 0 && fx[i].d >= from; i--) {
+      if (I.v[i] > h) { h = I.v[i]; hd = fx[i].d; }
+      if (I.v[i] < l) { l = I.v[i]; ld = fx[i].d; }
+    }
+    return { days, h, l, hd, ld, isHigh: p >= h - 1e-9, isLow: p <= l + 1e-9 };
+  };
+  const w7 = win(7), w30 = win(30);
+  const hlSignal = w30.isHigh ? { cls:'high', t:'近30日最高 → 賣出美金時機' }
+    : w30.isLow ? { cls:'low', t:'近30日最低 → 買入美金時機' }
+    : w7.isHigh ? { cls:'high', t:'近7日最高 → 可考慮賣出美金' }
+    : w7.isLow ? { cls:'low', t:'近7日最低 → 可考慮買入美金' }
+    : null;
+
   const ma20 = I.ma20[L], ma60 = I.ma60[L], ma120 = I.ma120[L], rsi = I.rsi[L];
   const bbU = I.bbU[L], bbL = I.bbL[L];
   const pctB = bbU > bbL ? (p - bbL) / (bbU - bbL) : 0.5;
@@ -1894,7 +1928,7 @@ function fxAnalysis() {
     : pos <= 0.2 ? '美元處近1年低檔 → 需要美元者可分批承接；不宜殺低賣美元'
     : '位於年區間中段 → 無明顯價位優勢，依趨勢方向小量操作';
 
-  return { L, p, last, hi, lo, hiD, loD, pos, vol, band1m, cross, ma20, ma60, ma120, rsi, bbU, bbL, pctB, trend, verdict, bullets, action };
+  return { w7, w30, hlSignal, L, p, last, hi, lo, hiD, loD, pos, vol, band1m, cross, ma20, ma60, ma120, rsi, bbU, bbL, pctB, trend, verdict, bullets, action };
 }
 
 function renderFx() {
@@ -1915,7 +1949,20 @@ function renderFx() {
     <div class="fx-range">
       <div class="fx-range-label"><span>52W 低 ${A.lo.toFixed(3)}</span><span>${(A.pos*100).toFixed(0)}%</span><span>高 ${A.hi.toFixed(3)}</span></div>
       <div class="fx-range-bar"><div class="fx-range-mark" style="left:${(A.pos*100).toFixed(1)}%"></div></div>
+    </div>
+    <div class="fx-hl">${hlTags(A)}</div>`;
+
+  // 7/30-day high/low cards
+  const card = (w, kind) => {
+    const isH = kind === 'h', v = isH ? w.h : w.l, d = isH ? w.hd : w.ld, hit = isH ? w.isHigh : w.isLow;
+    const gap = A.p - v;
+    return `<div class="fx-hl-card ${hit ? (isH ? 'hit-high' : 'hit-low') : ''}">
+      <div class="fx-hl-k"><span>近${w.days}日${isH ? '最高' : '最低'}</span><span>${d.slice(5)}</span></div>
+      <div class="fx-hl-v" style="color:var(--${isH ? 'accent' : 'gain'})">${v.toFixed(3)}</div>
+      <div class="fx-hl-s">${hit ? '● 今日即是' : '現價 ' + (gap >= 0 ? '+' : '−') + Math.abs(gap).toFixed(3)}</div>
     </div>`;
+  };
+  document.getElementById('fxHL').innerHTML = card(A.w7,'h') + card(A.w30,'h') + card(A.w7,'l') + card(A.w30,'l');
 
   // Summary
   const sum = document.getElementById('fxSummary');
@@ -1924,6 +1971,7 @@ function renderFx() {
   sum.innerHTML = `
     <div class="fx-summary-title">走勢判讀 <span class="fx-badge ${A.verdict.cls}">${A.verdict.t}</span></div>
     <ul>${A.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+    ${A.hlSignal ? `<div class="fx-signal ${A.hlSignal.cls}">${A.hlSignal.t}</div>` : ''}
     <div class="fx-action">操作參考：${A.action}</div>`;
 
   // Tables
@@ -1961,6 +2009,16 @@ function renderFx() {
     </table>`;
 
   renderFxChart();
+}
+
+function hlTags(A) {
+  const t = [];
+  if (A.w30.isHigh) t.push('<span class="fx-hl-tag high">▲ 近30日最高</span>');
+  else if (A.w7.isHigh) t.push('<span class="fx-hl-tag high">▲ 近7日最高</span>');
+  if (A.w30.isLow) t.push('<span class="fx-hl-tag low">▼ 近30日最低</span>');
+  else if (A.w7.isLow) t.push('<span class="fx-hl-tag low">▼ 近7日最低</span>');
+  if (!t.length) t.push('<span class="fx-hl-tag none">未達 7日／30日 高低點</span>');
+  return t.join('');
 }
 
 function setFxRange(r) {
@@ -2016,6 +2074,7 @@ function renderFxChart() {
       <path d="${line(I.ma20)}" fill="none" stroke="var(--accent)" stroke-width="1.3"/>
       <path d="${line(I.v)}" fill="none" stroke="var(--ink)" stroke-width="1.7" stroke-linejoin="round"/>
       <line x1="${padL}" x2="${W-padR}" y1="${Y(pLast).toFixed(1)}" y2="${Y(pLast).toFixed(1)}" stroke="var(--ink)" stroke-width=".8" stroke-dasharray="3,3" opacity=".45"/>
+      ${(() => { const A2 = fxAnalysis(); return [[A2.w30.h,'var(--accent)','30D高'],[A2.w30.l,'var(--gain)','30D低']].filter(x => x[0] >= lo && x[0] <= hi).map(([v,c,lab]) => `<line x1="${padL}" x2="${W-padR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${c}" stroke-width=".9" stroke-dasharray="5,4" opacity=".7"/><text class="chart-label" x="${W-padR-2}" y="${(Y(v)-3).toFixed(1)}" text-anchor="end" style="fill:${c}">${lab} ${v.toFixed(3)}</text>`).join(''); })()}
       ${marks}
       ${xt.join('')}
       <line id="fxCross" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--ink-soft)" stroke-width="1" opacity="0"/>
